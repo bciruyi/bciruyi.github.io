@@ -1,0 +1,434 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <id>https://bciruyi.github.io</id>
+    <title>codeing</title>
+    <updated>2022-05-11T05:15:23.733Z</updated>
+    <generator>https://github.com/jpmonette/feed</generator>
+    <link rel="alternate" href="https://bciruyi.github.io"/>
+    <link rel="self" href="https://bciruyi.github.io/atom.xml"/>
+    <subtitle>程序员</subtitle>
+    <logo>https://bciruyi.github.io/images/avatar.png</logo>
+    <icon>https://bciruyi.github.io/favicon.ico</icon>
+    <rights>All rights reserved 2022, codeing</rights>
+    <entry>
+        <title type="html"><![CDATA[唤起app方案汇总]]></title>
+        <id>https://bciruyi.github.io/post/huan-qi-app-fang-an-hui-zong/</id>
+        <link href="https://bciruyi.github.io/post/huan-qi-app-fang-an-hui-zong/">
+        </link>
+        <updated>2022-05-11T05:12:33.000Z</updated>
+        <content type="html"><![CDATA[<p>[toc]</p>
+<h1 id="唤起app方案汇总">唤起app方案汇总</h1>
+<table>
+<thead>
+<tr>
+<th>打开方式</th>
+<th>适用范围</th>
+<th>版本要求</th>
+<th>优点</th>
+<th>缺点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>URL Scheme/Deep Link</td>
+<td>Android/IOS</td>
+<td>/</td>
+<td>无版本限制</td>
+<td>1.唤醒app无法默认跳转失败页面 2.需要二次选择确认(android) 3.微信浏览器限制(微信屏蔽Scheme)</td>
+</tr>
+<tr>
+<td>Univerlink</td>
+<td>IOS</td>
+<td>IOS9以及以上</td>
+<td>只要跨越就可以实现app跳转</td>
+<td>/</td>
+</tr>
+<tr>
+<td>App-link</td>
+<td>Android</td>
+<td>Android6.0及以上</td>
+<td>URL匹配就行</td>
+<td>有浏览器兼容性问题</td>
+</tr>
+<tr>
+<td>微信开放标签</td>
+<td>Android/IOS</td>
+<td>微信版本:7.0.12 系统版本iOS10.3 Android 5.0</td>
+<td>微信内使用</td>
+<td>在微信app外无效</td>
+</tr>
+<tr>
+<td>小程序打开app</td>
+<td>/</td>
+<td>/</td>
+<td>/</td>
+<td>微信已经禁用</td>
+</tr>
+<tr>
+<td>公众号</td>
+<td>微信</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="url-scheme">URL SCheme</h2>
+<h3 id="androiddeep-link">Android(Deep Link)</h3>
+<ul>
+<li>
+<p>DeepLink用到的核心技术就是：URL SCheme</p>
+</li>
+<li>
+<p>步骤一:添加 intent 过滤器</p>
+</li>
+</ul>
+<pre><code> &lt;!--要想在别的App上能成功调起App，必须添加intent过滤器--&gt;
+            &lt;intent-filter&gt;
+                &lt;!--协议部分，随便设置 http://bocichina.com/bci_path--&gt;
+                &lt;data
+                    android:host=&quot;bocichina.com&quot;
+                    android:pathPrefix=&quot;/bci_path&quot;
+                    android:scheme=&quot;http&quot;/&gt;
+                &lt;!--下面这几行也必须得设置--&gt;
+                &lt;category android:name=&quot;android.intent.category.DEFAULT&quot;/&gt;
+                &lt;action android:name=&quot;android.intent.action.VIEW&quot;/&gt;
+                &lt;category android:name=&quot;android.intent.category.BROWSABLE&quot;/&gt;
+
+ &lt;/intent-filter&gt;
+    
+    备注:
+    data:指定scheme
+    VIEW:以便能够从 Google 搜索中访问此 intent 过滤器
+    BROWSABLE:浏览器打开
+    DEFAULT:隐士响应
+    
+</code></pre>
+<ul>
+<li>
+<p>步骤二:验证是否有效:使用 adb 测试 intent 过滤器 URI</p>
+<ul>
+<li>使用 adb 测试 intent 过滤器 URI</li>
+</ul>
+<pre><code>adb shell am start
+            -W -a android.intent.action.VIEW
+            -d &lt;URI&gt; &lt;PACKAGE&gt;
+</code></pre>
+<p>ego:</p>
+<pre><code>adb shell am start -W -a android.intent.action.VIEW -d &quot;http://bocichina.com/bci_path&quot; com.example.androidapp11
+</code></pre>
+</li>
+<li>
+<p>唤醒方式一:app内唤醒</p>
+<pre><code>//跳转app
+Intent action = new Intent(Intent.ACTION_VIEW);
+StringBuilder builder = new StringBuilder();
+builder.append(&quot;http://bocichina.com/bci_path?id=0&quot;);
+action.setData(Uri.parse(builder.toString()));
+startActivity(action);
+</code></pre>
+</li>
+<li>
+<p>唤醒方式二:系统浏览器唤醒</p>
+<pre><code>http://bocichina.com/bci_path
+</code></pre>
+<p>![image-20220423104004166](/Users/tzt/Library/Application Support/typora-user-images/image-20220423104004166.png)</p>
+</li>
+<li>
+<p>app内获取元素</p>
+<pre><code>    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.main);
+
+        Intent intent = getIntent();
+        String action = intent.getAction();
+        Uri data = intent.getData();
+    }
+</code></pre>
+</li>
+<li>
+<p>判断app是否安装</p>
+<pre><code>//判断是否安装了应用
+    private boolean schemeValid() {
+
+        PackageManager manager = getApplicationContext().getPackageManager();
+        Intent action = new Intent(Intent.ACTION_VIEW);
+        action.setData(Uri.parse(&quot;http://bocichina.com/bci_path&quot;));
+        List list = manager.queryIntentActivities(action, PackageManager.GET_RESOLVED_FILTER);
+        return list != null &amp;&amp; list.size() &gt; 0;
+}
+</code></pre>
+</li>
+</ul>
+<p><a href="https://developer.android.com/training/app-links/deep-linking#java">参考链接</a></p>
+<h3 id="ios">IOS</h3>
+<ul>
+<li>
+<p>步骤一：iOS新增配置</p>
+<p>![image-20220423105515423](/Users/tzt/Library/Application Support/typora-user-images/image-20220423105515423.png)</p>
+</li>
+<li>
+<p>步骤二：ios9以后需要配置白名单</p>
+<p>![image-20220423111501707](/Users/tzt/Library/Application Support/typora-user-images/image-20220423111501707.png)</p>
+</li>
+<li>
+<p>验证配置是否有效:浏览器调用</p>
+</li>
+</ul>
+<pre><code>不带参数
+bciappscheme://
+
+带参数
+bciappscheme://dic?num1=10&amp;num2=11&amp;num3=12&amp;name=mushao
+</code></pre>
+<p>![image-20220423105647528](/Users/tzt/Library/Application Support/typora-user-images/image-20220423105647528.png)</p>
+<ul>
+<li>
+<p>IOS 代码调用</p>
+<pre><code>NSString *url  =@&quot;bciappscheme://&quot;;
+if ([[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:url]]) {
+    [[UIApplication sharedApplication] openURL:[NSURL URLWithString:url]];
+}
+</code></pre>
+</li>
+<li>
+<p>IOS 代码回掉</p>
+</li>
+</ul>
+<pre><code>- (BOOL)application:(UIApplication *)app openURL:(NSURL *)url options:(NSDictionary&lt;UIApplicationOpenURLOptionsKey, id&gt; *)options{
+    //appscheme://dic?num1=10&amp;num2=11&amp;num3=12&amp;name=mushao
+    NSLog(@&quot;%@&quot;,url.absoluteString);
+    return YES;
+}
+</code></pre>
+<p>备注:没有SceneDelegate代码场景</p>
+<h3 id="h5">H5</h3>
+<ul>
+<li>唤醒app试例</li>
+</ul>
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+	&lt;meta charset=&quot;utf-8&quot;&gt;
+	&lt;title&gt;app跳转&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+ &lt;button onclick=&quot;lanchApp()&quot;&gt;唤醒app&lt;/button&gt;
+&lt;/body&gt;
+&lt;script type=&quot;text/javascript&quot;&gt;
+	function lanchApp() {
+		// body...
+		//alert(&quot;即将跳转&quot;);
+		//scheme://host:端口/path
+		//&lt;a href=&quot;caishilive://caishi:8080/loadtooldetail?tool_id=100&quot;&gt;打开APP工具详情页&lt;/a&gt;
+		window.location.href=&quot;http://bocichina.com/bci_path?id=0&quot;;
+		//window.location.href=&quot;http://www.baidu.com&quot;;
+	}
+&lt;/script&gt;
+&lt;/html&gt;
+</code></pre>
+<p>![image-20220423105200580](/Users/tzt/Library/Application Support/typora-user-images/image-20220423105200580.png)</p>
+<h2 id="univerlinkios">Univerlink(ios)</h2>
+<h3 id="前端改造点">前端改造点</h3>
+<ul>
+<li>
+<p>在 xcode 中开启 Associated Domains 服务</p>
+<p>![image-20220415210558218](/Users/tzt/Library/Application Support/typora-user-images/image-20220415210558218.png)</p>
+</li>
+<li>
+<p>在 Capabilities -&gt; Associated Domains 添加跳转域名格式为 applinks:universal-link.example.com</p>
+</li>
+</ul>
+<p>​	 ![image-20220415210732163](/Users/tzt/Library/Application Support/typora-user-images/image-20220415210732163.png)</p>
+<h3 id="后端改造点">后端改造点</h3>
+<ul>
+<li>
+<p>添加对通用链接的支持很容易。您需要采取三个步骤：</p>
+<ul>
+<li>创建一个<code>apple-app-site-association</code>文件，其中包含有关您的应用可以处理的 URL 的 JSON 数据。</li>
+<li>将文件上传<code>apple-app-site-association</code>到您的 HTTPS Web 服务器。您可以将文件放在服务器的根目录或<code>.well-known</code>子目录中。</li>
+<li>准备您的应用以处理通用链接。</li>
+</ul>
+</li>
+<li>
+<p>配置文件如下</p>
+<pre><code>{
+  &quot;applinks&quot;: {
+      &quot;details&quot;: [
+           {
+             &quot;appIDs&quot;: [ &quot;ABCDE12345.com.example.app&quot;, &quot;ABCDE12345.com.example.app2&quot; ],
+             &quot;components&quot;: [
+               {
+                  &quot;#&quot;: &quot;no_universal_links&quot;,
+                  &quot;exclude&quot;: true,
+                  &quot;comment&quot;: &quot;Matches any URL whose fragment equals no_universal_links and instructs the system not to open it as a universal link&quot;
+               },
+               {
+                  &quot;/&quot;: &quot;/buy/*&quot;,
+                  &quot;comment&quot;: &quot;Matches any URL whose path starts with /buy/&quot;
+               },
+               {
+                  &quot;/&quot;: &quot;/help/website/*&quot;,
+                  &quot;exclude&quot;: true,
+                  &quot;comment&quot;: &quot;Matches any URL whose path starts with /help/website/ and instructs the system not to open it as a universal link&quot;
+               },
+               {
+                  &quot;/&quot;: &quot;/help/*&quot;,
+                  &quot;?&quot;: { &quot;articleNumber&quot;: &quot;????&quot; },
+                  &quot;comment&quot;: &quot;Matches any URL whose path starts with /help/ and which has a query item with name 'articleNumber' and a value of exactly 4 characters&quot;
+               }
+             ]
+           }
+       ]
+   },
+   &quot;webcredentials&quot;: {
+      &quot;apps&quot;: [ &quot;ABCDE12345.com.example.app&quot; ]
+   },
+
+    &quot;appclips&quot;: {
+        &quot;apps&quot;: [&quot;ABCED12345.com.example.MyApp.Clip&quot;]
+    }
+}
+</code></pre>
+</li>
+<li>
+<p><strong>apple-app-association的更新时机</strong></p>
+<ul>
+<li>
+<p>每次App安装后的第一次Launch，会拉取apple-app-association</p>
+</li>
+<li>
+<p>Appstore每次App的版本更新后的第一次Launch，也会更新apple-app-association</p>
+</li>
+<li>
+<p>新版本下载方式变更 iOS14以及以后版本 <a href="https://developer.apple.com/documentation/bundleresources/entitlements/com_apple_developer_associated-domains">链接</a></p>
+<pre><code>在 macOS 11 及更高版本和 iOS 14 及更高版本中，应用程序apple-app-site-association从 Apple 管理的内容交付网络 (CDN) 专门针对关联域请求文件，而不是直接从您的 Web 服务器请求文件。如果 CDN 有该文件的旧版本，或者还没有该文件的副本，它会连接到您的 Web 服务器以获取最新版本。
+</code></pre>
+</li>
+<li>
+<p>新版本更新时机 <a href="https://developer.apple.com/documentation/xcode/supporting-associated-domains">链接</a></p>
+<pre><code>Apple 的内容交付网络会apple-app-site-association在 24 小时内为您的域请求文件。设备在应用安装后大约每周检查一次更新。
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="浏览器触发universal-link条件说明">浏览器触发universal-link条件说明</h3>
+<ul>
+<li>手机安装app/支持universal-link/并且打开过</li>
+<li>跳转的 url 是否和当前页面的 url 为不同域名，才能触发 universal-link机制</li>
+</ul>
+<p>备注:app启动后,系统会检索是否开启 Associated Domains，如果开启去下载 apple-app-site-association 文件,然后对此 APP 进行标注。用户加载链接时系统会先对已标注的 APP 进行检索，如果匹配则回对应打开 APP</p>
+<h2 id="app-link应用链接">App-link(应用链接)</h2>
+<h3 id="应用链接描述">应用链接描述</h3>
+<pre><code>Android App Links是一种特殊的Deep Links，它使Android系统能够直接通过网站地址打开应用程序对应的内容页面，而不需要用户选择使用哪个应用来处理网站地址。
+
+要添加Android App Links到应用中，需要在应用里定义通过Http(s)地址打开应用的intent filter，并验证你确实拥有该应用和该网站。如果系统成功验证到你拥有该网站，那么系统会直接把URL对应的intent路由到你的应用。
+</code></pre>
+<h3 id="前端改造点-2">前端改造点</h3>
+<ul>
+<li>
+<p>在AndroidManifest里要求系统自动进行App Links的所有权验证。这个配置会告诉Android系统去验证你的应用是否属于在intent filter内指定的URL域名</p>
+<pre><code>  &lt;!--要想在别的App上能成功调起App，必须添加intent过滤器--&gt;
+            &lt;intent-filter android:autoVerify=&quot;true&quot;&gt;
+                &lt;data
+                    android:host=&quot;ouhuangapp.github.io&quot;
+                    android:scheme=&quot;https&quot;
+                    android:pathPrefix=&quot;/github.io&quot; /&gt;
+                &lt;!--下面这几行也必须得设置--&gt;
+                &lt;category android:name=&quot;android.intent.category.DEFAULT&quot; /&gt;
+                &lt;action android:name=&quot;android.intent.action.VIEW&quot; /&gt;
+                &lt;category android:name=&quot;android.intent.category.BROWSABLE&quot; /&gt;
+            &lt;/intent-filter&gt;
+            &lt;intent-filter&gt;
+                &lt;action android:name=&quot;android.intent.action.VIEW&quot; /&gt;
+
+                &lt;category android:name=&quot;android.intent.category.DEFAULT&quot; /&gt;
+                &lt;category android:name=&quot;android.intent.category.BROWSABLE&quot; /&gt;
+
+                &lt;data
+                    android:scheme=&quot;https&quot;
+                    android:host=&quot;ouhuangapp.github.io&quot;
+                    android:path=&quot;/github.io&quot; /&gt;
+            &lt;/intent-filter&gt;
+</code></pre>
+</li>
+</ul>
+<h3 id="后段改造点">后段改造点</h3>
+<ul>
+<li>
+<p>服务器添加配置文件(格式路径如下)</p>
+<pre><code>https://domain.name/.well-known/assetlinks.json
+</code></pre>
+</li>
+</ul>
+<p>![image-20220425142623261](/Users/tzt/Library/Application Support/typora-user-images/image-20220425142623261.png)</p>
+<h3 id="deeplinkapplink区别android">DeepLink/AppLink区别(android)</h3>
+<p>![image-20220424084203028](/Users/tzt/Library/Application Support/typora-user-images/image-20220424084203028.png)</p>
+<ul>
+<li><a href="https://developer.android.com/studio/write/app-link-indexing#kotlin">官方链接</a></li>
+</ul>
+<h2 id="微信开放标签">微信开放标签</h2>
+<h3 id="功能介绍">功能介绍</h3>
+<p>场景:用户在微信内访问网页时需要跳转到 APP,比如今日头条。</p>
+<h3 id="实现条件">实现条件</h3>
+<p>绑定域名和移动应用后，即可在网页中使用“微信开放标签”跳转对应的移动应用</p>
+<h3 id="问题思考">问题思考</h3>
+<p>H5引入js,如何知道是否安装了app？</p>
+<p>结论：页面是不知道的,只能提示打开app，用户点击后，js可以可以使用微信用原生交互(url-scheme)，校验完成回掉给H5，最终决定是否打开app还是跳转appstore</p>
+<ul>
+<li><a href="https://developers.weixin.qq.com/doc/oplatform/Mobile_App/WeChat_H5_Launch_APP.html">官方链接</a></li>
+</ul>
+<h2 id="微信小程序打开app">微信小程序打开app</h2>
+<h3 id="关闭说明">关闭说明</h3>
+<p>![image-20220425111614716](/Users/tzt/Library/Application Support/typora-user-images/image-20220425111614716.png)</p>
+<p><a href="https://developers.weixin.qq.com/community/develop/doc/000c04d94c0588744a2cf4d9c5bc09">参考官方文档</a></p>
+<h2 id="方案总结">方案总结</h2>
+<h3 id="app唤醒场景">app唤醒场景</h3>
+<p>1.打开微信里面的小程序</p>
+<p>2.打开头条里面的新闻详情</p>
+<p>3.微信里面打开其他app</p>
+<p>4.小程序里面打开其他app</p>
+<p>5.浏览器里面打开其他app</p>
+<p>以上场景均为唤醒app后做的业务</p>
+<h3 id="app打开目前流行的方案">app打开目前流行的方案</h3>
+<ul>
+<li>
+<p>iOS</p>
+<ul>
+<li>使用Univerlink方式</li>
+<li>在微信浏览器内使用微信标签(微信屏蔽了url-scheme,新版本sdk支持Univerlink)</li>
+<li>在系统浏览器使用URL-scheme</li>
+</ul>
+</li>
+<li>
+<p>android</p>
+<ul>
+<li>使用URL-shcheme(deep link)</li>
+<li>在微信浏览器内使用微信标签(微信屏蔽了url-scheme)  需要引导用户到系统浏览器打开(最终是URL-scheme)</li>
+<li>在系统浏览器使用URL-scheme</li>
+<li>app-link 兼容性有问题部分浏览器打不开(百度浏览器-oppo A32) 有些需要用户点击</li>
+</ul>
+</li>
+</ul>
+<h1 id="知乎实现方式记录">知乎实现方式记录</h1>
+<p>1.Android 微信内部打开app问题沟通</p>
+<p>2.确定知乎app里面唤醒app是系统触发还是js前端做的</p>
+<p>3.确定知乎app页面地址在浏览器提示打开按钮实现方案</p>
+<pre><code>https://developer.apple.com/documentation/webkit/promoting_apps_with_smart_app_banners
+</code></pre>
+<p>![image-20220426131333742](/Users/tzt/Library/Application Support/typora-user-images/image-20220426131333742.png)</p>
+<p>4.确定知乎的开发模式![image-20220426132633482](/Users/tzt/Library/Application Support/typora-user-images/image-20220426132633482.png)</p>
+<p>微信浏览器外点击按钮事件</p>
+<pre><code>&quot;zhihu://articles/453562284?utm_content=app_jumping&amp;open=0&quot; 
+</code></pre>
+<p>是否是微信浏览器</p>
+<pre><code>MicroMessenger
+</code></pre>
+<p>![image-20220426135029321](/Users/tzt/Library/Application Support/typora-user-images/image-20220426135029321.png)</p>
+<p>![image-20220426135104152](/Users/tzt/Library/Application Support/typora-user-images/image-20220426135104152.png)</p>
+<p>![image-20220427162755946](/Users/tzt/Library/Application Support/typora-user-images/image-20220427162755946.png)</p>
+]]></content>
+    </entry>
+</feed>
